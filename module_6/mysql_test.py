@@ -1,31 +1,58 @@
 import mysql.connector
-from mysql.connector import errorcode
 
-config = {
-	"user": "movies_user",
-	"password": "popcorn", 
-	"host": "127.0.0.1",
-	"database": "movies",
-	"raise_on_warnings": True
-}
+mydb = mysql.connector.connect(
+    user="movies_user",
+    password="popcorn",
+    host="localhost",
+    database="movies"
+)
 
+cursor = mydb.cursor()
 
-try: 
-	db =mysql.connector.connect(**config)
+def show_films(cursor, title):
+    # method to execute an inner join on all tables.
+    # iterate over the dataset and output the results to the terminal window.
 
-	print("\n Database user{} connected to MySQL on host {} with database {}".format(config["user"], config["host"], config["database"]))
+    # inner join query
+    cursor.execute("SELECT film_name AS Name, film_director AS Director, genre_name as Genre, studio_name as Studio "
+                   "FROM film INNER JOIN genre ON film.genre_id=genre.genre_id INNER JOIN studio ON "
+                   "film.studio_id=studio.studio_id")
 
-	input("\n\n Press any key to continue...")
+    # get the results from the cursor object
+    films = cursor.fetchall()
 
-except mysql.connector.Error as err:
-	if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-		print(" The supplied username or password are invalid")
+    print("\n -- {} --".format(title))
 
-	elif err.errno == errorcode.ER_BAD_DB_ERROR:
-		print(" The specified database does not exist")
+    # iterate over the film data set and display the results
+    for film in films:
+        print("Film Name: {}\nDirector: {}\nGenre Name ID: {}\nStudio Name: {}\n".format(film[0], film[1], film[2], film[3]))
 
-	else:
-		print(err)
+#call the function
+show_films(cursor, "DISPLAYING FILMS")
 
-finally:
-	db.close()
+#Next Item
+#Insert a new record into film
+sqlInsert = "INSERT INTO film (film_name, film_releaseDate, film_runtime, film_director, studio_id, genre_id) VALUES ('Jurassic Park', '1993', '127', 'Steven Spielberg', '3', '2')"
+cursor.execute(sqlInsert)
+mydb.commit() #commit is required to make changes otherwise no changes are made to table
+
+#call the function
+show_films(cursor, "DISPLAYING FILMS AFTER INSERT")
+
+#Next Item
+#Update the film Alien to a Horror Film
+sqlUpdate = "UPDATE film SET genre_id = '1' WHERE film_name = 'Alien'"
+cursor.execute(sqlUpdate)
+mydb.commit()
+
+#call the function
+show_films(cursor, "DISPLAYING FILMS AFTER UPDATE - Changes Alien to Horror")
+
+#Next Item
+#Delete the Movie Gladiator
+sqlDelete = "DELETE FROM film WHERE film_name = 'Gladiator'"
+cursor.execute(sqlDelete)
+mydb.commit()
+
+#call the function
+show_films(cursor, "DISPLAYING FILMS AFTER DELETE")
